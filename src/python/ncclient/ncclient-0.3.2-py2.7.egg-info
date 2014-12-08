@@ -1,0 +1,10 @@
+Metadata-Version: 1.0
+Name: ncclient
+Version: 0.3.2
+Summary: Python library for NETCONF clients
+Home-page: http://schmizz.net/ncclient/
+Author: Shikhar Bhushan, Leonidas Poulopoulos
+Author-email: shikhar@schmizz.net, leopoul@noc.grnet.gr
+License: Apache License 2.0
+Description: UNKNOWN
+Platform: Posix; OS X; Windows
