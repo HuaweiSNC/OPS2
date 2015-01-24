@@ -56,7 +56,7 @@ logger.addHandler(ch)
 loggerall.addHandler(logall) 
 
 DBPath=os.getcwdu()
-dbFile=DBPath+'\OPS2.db'
+dbFile='%s%sOPS2.db' % (DBPath, os.sep)
 
 def setOpsLoggingLevel(loglevel):
     logger.setLevel(loglevel)
