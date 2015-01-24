@@ -88,9 +88,9 @@ def getuserdbfileBypath(path):
     elif path.find('?') != -1:
         temp = path.split('?')
         app=temp[0]
-        
-    dbfile='/'+app+'.db'
-    dbpath="webapps/"+ dbfile
+    
+    dbfile='%s.db' % app
+    dbpath = os.path.join(os.getcwd(), 'webapps', dbfile)    
     return dbpath
 
 def getuserdbBypath(path):
