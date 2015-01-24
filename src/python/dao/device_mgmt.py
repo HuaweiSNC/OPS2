@@ -25,6 +25,7 @@ class DevicesMgt(object):
             ('id', str),
             ('devicename', str),
             ('ip', str),
+            ('port', str),
             ('username', str),
             ('passwd', str),
             ('productType', str),
@@ -49,6 +50,7 @@ class DevicesMgt(object):
         self._conn.execute("create table if not exists devices_table( id integer primary key, \
                                                                       devicename varchar(128), \
                                                                       ip varchar(128), \
+                                                                      port integer, \
                                                                       username varchar(128), \
                                                                       passwd varchar(128), \
                                                                       productType varchar(128), \
@@ -143,14 +145,14 @@ class DevicesMgt(object):
             return line[0],line[1], line[2],line[3],line[4]
         return None,None,None,None,None
      
-    def add_devices(self,devicename,ip,username,passwd,productType,version, iid=None):
+    def add_devices(self,devicename,ip, port, username,passwd,productType,version, iid=None):
         if self.find_device(devicename)!=None:
             return False
         
         #encode the password before add to DB
         encryptpasswd=EncodePassword(passwd)  
-        tcontent = (devicename,ip,username,encryptpasswd,productType,version)
-        sql_state="insert into devices_table(devicename,ip,username,passwd,productType,version) values (?,?,?,?,?,?);"
+        tcontent = (devicename,ip,port,username,encryptpasswd,productType,version)
+        sql_state="insert into devices_table(devicename,ip,port,username,passwd,productType,version) values (?,?,?,?,?,?,?);"
         
         if (iid is None) :
             iid = self.get_noexist_deviceid(devicename)
@@ -160,8 +162,8 @@ class DevicesMgt(object):
             rowvaluebyid=self.find_devicebyid(iid)
             if (rowvaluebyid != None):
                 return False 
-            tcontent = (iid,devicename,ip,username,encryptpasswd,productType,version)
-            sql_state="insert into devices_table(id,devicename,ip,username,passwd,productType,version) values (?,?,?,?,?,?,?);"
+            tcontent = (iid,devicename,ip,port,username,encryptpasswd,productType,version)
+            sql_state="insert into devices_table(id,devicename,ip,port,username,passwd,productType,version) values (?,?,?,?,?,?,?,?);"
   
         retsql=self._conn.execute(sql_state, tcontent)
         self._conn.commit()
@@ -188,7 +190,7 @@ class DevicesMgt(object):
         namelist=[]
         
         for line in res:
-            namelist.append({'id': line[0], 'devicename':line[1],'ip':line[2],'username':line[3],'passwd':line[4],'productType':line[5],'version':line[6]})
+            namelist.append({'id': line[0], 'devicename':line[1],'ip':line[2],'port':line[3],'username':line[4],'passwd':line[5],'productType':line[6],'version':line[7]})
         
         for deviceinfo in namelist:
             deviceId= deviceinfo['id']
@@ -214,7 +216,7 @@ class DevicesMgt(object):
             self._deviceIdList.pop(deviceid)
         return (retsql.rowcount != 0)
     
-    def update_device(self, deviceid, devicename,ip,username,passwd,productType,version):
+    def update_device(self, deviceid, devicename,ip,port,username,passwd,productType,version):
         
         #if find device by devicename then update by devicename
         if (deviceid != None):
@@ -235,11 +237,19 @@ class DevicesMgt(object):
         encryptpasswd=EncodePassword(passwd)
         tcontent = (devicename,ip,username,encryptpasswd,productType,version,devicename)
         sql_state='update devices_table set devicename=?,ip=?,username=?,passwd=?,productType=?,version=? where devicename=?;'
-        
+        if (deviceid == None and port != None):
+            tcontent = (devicename,ip,port,username,encryptpasswd,productType,version,devicename)
+            sql_state='update devices_table set devicename=?,ip=?, port=?, username=?,passwd=?,productType=?,version=? where devicename=?;'
+         
         #print passwd
         if (deviceid != None):
             tcontent = (devicename,ip,username,encryptpasswd,productType,version,deviceid)
             sql_state='update devices_table set devicename=?,ip=?,username=?,passwd=?,productType=?,version=? where id=?;'
+ 
+        if (deviceid != None and port != None):
+            tcontent = (devicename,ip,port,username,encryptpasswd,productType,version,deviceid)
+            sql_state='update devices_table set devicename=?,ip=?,port=?,username=?,passwd=?,productType=?,version=? where id=?;'
+       
        
         self._conn.execute(sql_state, tcontent)
         self._conn.commit()

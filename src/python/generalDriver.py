@@ -65,7 +65,7 @@ class Process_Rest_Api(Rest_Adapter):
         #manager.logging.basicConfig(filename='e:/ncclient.log', level=manager.logging.DEBUG)
         logger.debug('client session request initiated ')     
         try:   
-            self._m = manager.connect_ssh(ip, port = port,username=username,password=password)
+            self._m = manager.connect_ssh(ip, port = port,username=username,password=password, allow_agent=False,look_for_keys=False)
             self.status = self._m.connected
             logger.debug('client session creation is successful ')
         except Exception as e: 
@@ -112,7 +112,7 @@ class Process_Rest_Api(Rest_Adapter):
                 self.port = self.mainDevice['port']
                 self.username = self.mainDevice['username']
                 self.password = self.mainDevice['passwd']
-                self._m = manager.connect_ssh(self.ip, port =self.port, username=self.username, password=self.password)
+                self._m = manager.connect_ssh(self.ip, port =self.port, username=self.username, password=self.password,allow_agent=False,look_for_keys=False)
                 if self._m is not None :
                     self.status = self._m.connected
                     logger.info('Client session is created by ip:%s, port:%s, username:%s'%(self.ip,self.port,self.username))
@@ -143,7 +143,7 @@ class Process_Rest_Api(Rest_Adapter):
                     self.username = subDevices.get('username')
                     self.password = subDevices.get('passwd')
                     
-                    connected = manager.connect_ssh(self.ip, port = self.port ,username = self.username, password = self.password)
+                    connected = manager.connect_ssh(self.ip, port = self.port ,username = self.username, password = self.password, allow_agent=False,look_for_keys=False)
                     if connected is not None :
                         self._m = connected 
                         logger.info('Client session is created by ip:%s, port:%s, username:%s'%(self.ip,self.port,self.username))

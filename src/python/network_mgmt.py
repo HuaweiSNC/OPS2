@@ -41,6 +41,7 @@ class NetworkM():
         version= elem['version']
         driver=  elem['driver']
         devicename=  elem['devicename']
+        port = elem.get('port')
         subdevices = elem.get('subdevices')
         if(subdevices == None or isinstance(subdevices,list) == False) : 
             subdevices = []
@@ -48,7 +49,7 @@ class NetworkM():
             #TODO log
             return False
         
-        networkDevice = NetworkDeviceM(sid,ip,username,password,driver)
+        networkDevice = NetworkDeviceM(sid,ip,port, username,password,driver)
         networkDevice.productType = productType
         networkDevice.version = version
         networkDevice.name = devicename
@@ -157,6 +158,7 @@ class NetworkM():
                     'connectstatus' : networkDevice.connectstatus,
                     'esn' : networkDevice.get_esn(),
                     'ip':networkDevice.ip,
+                    'port':networkDevice.port,
                     'username':networkDevice.username,
                     'passwd':'',
                     'productType':networkDevice.productType,

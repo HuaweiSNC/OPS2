@@ -332,6 +332,7 @@ def devices_config_post(db):
         passwd = deviceinfo['passwd']
         productType = deviceinfo['productType']
         version = deviceinfo['version']
+        port = deviceinfo.get('port')
         deviceiid = deviceinfo.get('id')
         subdevices = deviceinfo.get('subdevices')
         if (deviceiid is not None and 
@@ -357,9 +358,13 @@ def devices_config_post(db):
                      or sudevice.get('port')=='' or sudevice.get('port') is None):
                     response.status = HTTP_SERVER_ERROR
                     return dict(error='subdevices must have the following data (ip, port, username)')      
-                 
+        
+        if (port == None):
+            port = '22'
+            deviceinfo['port']=port
+            
         #add devices
-        deviceid = device_db.add_devices(devicename, ip, username, passwd, productType, version, deviceiid)
+        deviceid = device_db.add_devices(devicename, ip, str(port), username, passwd, productType, version, deviceiid)
         if deviceid == 0:
             response.status = HTTP_SERVER_ERROR
             return dict(error='device %s or id already exists' % devicename)
@@ -424,6 +429,7 @@ def devices_config_put(db):
         passwd = deviceinfo['passwd']
         productType = deviceinfo['productType']
         version = deviceinfo['version']
+        port = deviceinfo.get('port')
         subdevices = deviceinfo.get('subdevices')
         if (ip == ''  or username ==''
             or productType=='' or devicename==''):
@@ -445,7 +451,7 @@ def devices_config_put(db):
             return dict(error='can not find the driver , detail: producttype=%s and version=%s' %(productType, version))
         
         # update device 
-        ret = device_db.update_device(deviceid, devicename, ip, username, passwd, productType, version)
+        ret = device_db.update_device(deviceid, devicename, ip, port, username, passwd, productType, version)
         if ret == False:
             response.status = HTTP_SERVER_ERROR
             return dict(error='id %s , device %s does not exist or devicename is repeat' % (deviceid, devicename))

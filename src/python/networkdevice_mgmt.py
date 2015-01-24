@@ -6,10 +6,11 @@ logger = logging.getLogger("ops.network.device")
 
 class NetworkDeviceM():     
     
-    def __init__(self,deviceid,ip,username,password,driver):        
+    def __init__(self,deviceid,ip,port,username,password,driver):        
         self.connlist = []
         self.deviceid = deviceid
         self.ip = ip
+        self.port = port
         self.username =username
         self.password = password
         self.driverFile =driver
@@ -22,7 +23,6 @@ class NetworkDeviceM():
         self.name = ''
         self.subdevices =[]
         self.isbreak = False
-        self.port = 22
         self.esn = ''
         self.connesn = None
         self.errmsg = ''

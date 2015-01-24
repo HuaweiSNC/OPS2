@@ -10,7 +10,7 @@ class ConnectM():
     def __init__(self,ip, port, username, password, driverFile, sid): 
         self.sid = sid       
         self.ipaddress = ip
-        self.port = 22
+        self.port = port
         self.password = password
         self.username =username
         self.driverFile = driverFile
