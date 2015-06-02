@@ -88,9 +88,9 @@ def getuserdbfileBypath(path):
     elif path.find('?') != -1:
         temp = path.split('?')
         app=temp[0]
-    
+        
     dbfile='%s.db' % app
-    dbpath = os.path.join(os.getcwd(), 'webapps', dbfile)    
+    dbpath = os.path.join(os.getcwd(), 'webapps', dbfile)
     return dbpath
 
 def getuserdbBypath(path):
@@ -143,13 +143,9 @@ def database_get(path):
     try:
         data = ""
         ret = dm.get_userdata(userdata.username,userdata.infoname)        
-        if path.find('checkresult') != -1:
+        if ret != None and path.find('checkresult') != -1:
             if check_userPsd(userdata.datainfo, ret[3])==True:
                 return '<ok></ok>'
-            #print 'check password'
-          #  print  check_userPsd(userdata.datainfo, ret[3])
-#            return check_userPsd(userdata.datainfo, ret[3])    
-             
                  
         if ret != None and ret[2] != 'password':
             data = ret[3]

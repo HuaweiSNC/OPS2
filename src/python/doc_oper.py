@@ -1,13 +1,16 @@
 import os
+import config
+import logging 
+logger = logging.getLogger("ops.docs")  
 
 def GetDocContent(filepath,size=0):
     if os.path.isfile(filepath) == 0:
-        print "the file %s does not exist"%filepath
+        logger.warning( "the file %s does not exist" % filepath)
         return
             
     file = open(filepath, "rb");
     if file == None:
-        print "open file %s failed"%filepath       
+        logger.info( "open file %s failed" % filepath )      
     content=file.read()    
  
     #print "get file content OK"
@@ -18,17 +21,12 @@ def GetDocContent(filepath,size=0):
 def GetHelpDoc(path):
     if path == 'doc':
         content = '<files>'
-        for filename in os.listdir(r'OPEN_DAYLIGHT'):        
+        for filename in os.listdir(r'docs'):        
             content = content + '\n' + '    <file>' + filename + '</file>' 
         content = content + '\n' + '</files>'        
         return content
-    
-    fileinfo = path.split('/')  
-    if len(fileinfo) != 2 or fileinfo[0]!='doc':
-        print 'wrong url'
-        return
-    
-    filepath="OPEN_DAYLIGHT/"+fileinfo[1]  
+ 
+    filepath="docs/"+ path
     #print "open file: %s"%filepath    
     content = GetDocContent(filepath)
     return content

@@ -5,18 +5,28 @@ Created on 2013-11-30
 
 import sqlite3
 import base64
+import os
+
 from cipher_mgmt import EncodePassword
 
 class WebAppDBMgt():
     def __init__(self,db=None,DBName=None):
+        
+        initialize = True
         if db != None:
             self._conn=db
         else:
+            if not os.path.exists(DBName):
+                initialize = False
             self._conn = sqlite3.connect(DBName)
+            
         self._conn.execute("create table if not exists webappdb_table(username  varchar(128), \
                                                                       infoname varchar(128) primary key, \
                                                                       datatype varchar(128), \
-                                                                      data varchar(65535));")
+                                                                     data varchar(65535));")
+        
+        if not initialize:
+            self.add_userdata("admin", "password", "password", "admin")
         self._cur = self._conn.cursor()
     
     def __exit__(self):

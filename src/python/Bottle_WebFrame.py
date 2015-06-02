@@ -19,17 +19,17 @@ import sys
 import time
 import logging  
 from plugin.bootle_sqlite import SQLitePlugin
-
+from dao.urlmapping_mgmt import urlmapping_mgmt
 from dao.driver_mgmt import driver_mgmt
 from dao.device_mgmt import DevicesMgt
-from xmlTojson import isdk_convert_xml2json
- 
 
+from xmlTojson import isdk_convert_xml2json
 from cipher_mgmt import DecodePassword
 from doc_oper import GetHelpDoc, GetLogDoc
 from config_check import check_arg
 from webapp_mgmt import webapp_general_process,database_general_process
 from network_mgmt import NetworkM
+
 from plugin.auth_backend import AuthBackend
 
 main_app=bottle.Bottle()
@@ -43,13 +43,15 @@ g_enableWhiteList=False
 g_channelnum=2
 g_checkesn=False
 g_aaa=AuthBackend(dbfile, True)
+g_urlmappingclass=urlmapping_mgmt(None,dbfile)
 
 HTTP_UNAUTHORIZED_ACCESS = 401
 HTTP_SERVER_ERROR = 500
 HTTP_RESPONSE_OK = 200
 HTTP_RESOURCE_EMPTY = 204
 HTTP_RESOURCE_NOTFIND = 404
- 
+HTTP_CONTENT_TYPE_JSON = "application/json"
+HTTP_CONTENT_TYPE_XML = "application/xml"
 logger = logging.getLogger("ops.web") 
 
 def myauth_basic(needrole, realm="login", text="Access denied"):
@@ -496,6 +498,79 @@ def devices_getone(deviceid):
         response.status = HTTP_SERVER_ERROR
         return dict(error=e.message)
         
+@main_app.route('/urlmapping/<urlmapping_id>', method='GET', apply=[sqlite_plugin])
+@myauth_basic(g_aaa.AUTH_ADMIN)
+def urlmapping_get_byid(db, urlmapping_id):
+    #return showalldevices(db)
+    dm2 = urlmapping_mgmt(db=db)
+    namelist = dm2.find_urlmappingbyid(urlmapping_id)
+    return {'urlmappings':namelist}        
+        
+@main_app.route('/urlmapping/groupname/<urlmapping_groupname>', method='GET', apply=[sqlite_plugin])
+@myauth_basic(g_aaa.AUTH_ADMIN)
+def urlmapping_get_bygroupname(db, urlmapping_groupname):
+    #return showalldevices(db)
+    dm2 = urlmapping_mgmt(db=db)
+    namelist = dm2.find_urlmappingbygroup(urlmapping_groupname)
+    return {'urlmappings':namelist}
+
+@main_app.route('/urlmapping', method='GET', apply=[sqlite_plugin])
+@myauth_basic(g_aaa.AUTH_ADMIN)
+def urlmapping_get(db):
+    #return showalldevices(db)
+    dm2 = urlmapping_mgmt(db=db)
+    namelist = dm2.getAllUrlmappingInfo()
+    return {'urlmappings':namelist}
+
+@main_app.route('/urlmapping', method='POST', apply=[sqlite_plugin])
+@myauth_basic(g_aaa.AUTH_ADMIN)
+def urlmapping_post(db):
+    
+    body= request.body
+    ddict = body.read()
+    try:
+        urlmapping = json.loads(ddict)
+        
+        groupname = urlmapping['groupname']
+        uriregular = urlmapping['uriregular']
+        modulename = urlmapping['modulename']
+        
+        dm2 = urlmapping_mgmt(db=db)
+        ret = dm2.add_urlmapping(groupname, uriregular, modulename)
+  
+        if ret == False:
+            response.status = HTTP_SERVER_ERROR
+            return dict(error='failed to create urlmapping .')
+        else:
+            return dict(ok='ok')
+    except Exception, e:
+        response.status = HTTP_SERVER_ERROR
+        return dict(error=e.message)
+    
+@main_app.route('/urlmapping/<urlmapping_id>', method='DELETE', apply=[sqlite_plugin])
+@myauth_basic(g_aaa.AUTH_ADMIN)
+def urlmapping_delete(db, urlmapping_id):
+    #return showalldevices(db)
+    dm2 = urlmapping_mgmt(db=db)
+    ret = dm2.delete_urlmapping_id(urlmapping_id)
+    if ret == False:
+        response.status = HTTP_SERVER_ERROR
+        return dict(error='failed to delete urlmapping .')
+    
+    return dict(ok='ok')
+
+@main_app.route('/urlmapping/groupname/<urlmapping_groupname>', method='DELETE', apply=[sqlite_plugin])
+@myauth_basic(g_aaa.AUTH_ADMIN)
+def urlmapping_group_delete(db, urlmapping_groupname):
+    #return showalldevices(db)
+    dm2 = urlmapping_mgmt(db=db)
+    ret = dm2.delete_urlmapping(urlmapping_groupname)
+    if ret == False:
+        response.status = HTTP_SERVER_ERROR
+        return dict(error='failed to delete urlmapping .')
+    
+    return dict(ok='ok')
+         
 @main_app.route('/drivers', method='GET', apply=[sqlite_plugin])
 @myauth_basic(g_aaa.AUTH_USER)
 def drivers_get(db):
@@ -503,7 +578,7 @@ def drivers_get(db):
     dm2 = driver_mgmt(db=db)
     namelist = dm2.getAllDriverInfo()
     return {'drivers':namelist}
-      
+
 @main_app.route('/drivers', method='POST', apply=[sqlite_plugin])
 @myauth_basic(g_aaa.AUTH_USER)
 def drivers_post(db):
@@ -558,6 +633,12 @@ def Doc_Help(path):
     content = GetHelpDoc(path)
     return  content
 
+@main_app.route('/help',method='GET')
+def Docs_Help():
+    content = GetHelpDoc("all.html")
+    return  content
+ 
+
 #===============================================================================
 # general process
 #===============================================================================
@@ -592,8 +673,10 @@ def devices_delete(device_id, path):
 @main_app.route('/database/<path:path>', method='DELETE')
 @myauth_basic(g_aaa.AUTH_USER)
 def database_get(path):
-    prefix,dbpath=request.url.split('/database/')
-    ret = database_general_process(dbpath, request.method, request.body.read(request.MEMFILE_MAX))
+    myurl = request.url
+    prefix,dbpath=myurl.split('/database/')
+    mybody=request.body
+    ret = database_general_process(dbpath, request.method, mybody.read(request.MEMFILE_MAX))
     return ret
 
 @main_app.route('/<path:path>', method='GET')
@@ -615,7 +698,9 @@ def general_process(device_id, path):
     
     begin = time.time()
     strMethod = request.method
+    strContentType = request.content_type
     strMethod = strMethod.upper()
+    
     ## get resource's schemapath in URI
     urlfull = request.url
     prefix,schemapath=urlfull.split('/devices/')
@@ -657,23 +742,38 @@ def general_process(device_id, path):
         logger.exception(e)
         response.status = HTTP_SERVER_ERROR
         return e.message
-        
+    
+    dataObj = None
     try:
         dInputBody = {
         'json_array' : None,
-        'xml_input'  : None
-        }
+        'xml_input'  : None,
+        'text_input' : None
+        } 
 
         ## get request messege's body
         read_http_body_strategy(dInputBody)
-    
+ 
         ## if the xpath has suffix, you need to split it.
+        response.content_type = 'application/xml'
         lpath = schemapath.split('/')
-        if (lpath[len(lpath) - 1] == 'xml' or lpath[len(lpath) - 1] == 'json'):
-            lastElem = lpath.pop(-1)
+        lastword = lpath[len(lpath) - 1]
+        responseContentType = "xml"
+        if (lastword == 'xml'):
+            responseContentType = lpath.pop(-1)
+            response.content_type = HTTP_CONTENT_TYPE_XML
+        if (lastword == 'json'):
+            responseContentType = lpath.pop(-1)
+            response.content_type = HTTP_CONTENT_TYPE_JSON
         else:
-            lastElem = lpath[len(lpath) - 1]
-            
+            responseContentType = lastword
+            if (strContentType == HTTP_CONTENT_TYPE_JSON):
+                responseContentType = "json"
+                response.content_type = HTTP_CONTENT_TYPE_JSON
+            elif (strContentType == HTTP_CONTENT_TYPE_XML):
+                responseContentType = "xml"
+                response.content_type = HTTP_CONTENT_TYPE_XML
+          
         ## remove the data type and compose the real schema path
         delimiter = '/'
         schemapath =  delimiter.join(lpath)
@@ -695,22 +795,29 @@ def general_process(device_id, path):
         else:
             ## there may be some other operators extended
             pass
-    except Exception as e:
+    except NotImplementedError , e:
+        response.status = HTTP_RESOURCE_NOTFIND
+        logger.error('Exception when executing rest operation : %s %s error:%s', strMethod, recordpath, e)
+        return e.message
+    except Exception , e:
+        response.status = HTTP_SERVER_ERROR
         logger.error('Exception when executing rest operation : %s %s error:%s', strMethod, recordpath, e)
         logger.exception(e)
-        response.status = HTTP_SERVER_ERROR
         return e.message
+    
     finally:
-         connectOne.free()
+        connectOne.free()
          
     if dataObj == None :
         response.status = HTTP_SERVER_ERROR
         return 
-    elif dataObj.startswith('<rpc-error') :
+    elif dataObj.startswith('<rpc-error') or dataObj.strip().startswith('<rpc-error')  :
         response.status = HTTP_SERVER_ERROR
         
     ## do convert or not by judging the suffix
-    if ("json" == lastElem):
+    if (dataObj == "" or dataObj == None):
+        pass
+    elif ("json" == responseContentType):
         dataObj = isdk_convert_xml2json(dataObj)
     else:
         dataObj = str(dataObj)
@@ -720,7 +827,7 @@ def general_process(device_id, path):
     logger.info('End Message Proc -- %s %s , process time = %fs ', strMethod, recordpath, diff)
     
     #print dataObj
-    if (dataObj == None):
+    if (dataObj == None or dataObj == ""):
         response.status = HTTP_RESOURCE_EMPTY
         
     return dataObj
@@ -735,8 +842,9 @@ def read_http_body_strategy(dInputBody):
         dInputBody['json_array'] = json.loads(body_input)
     elif (flag_char == '<'):
         dInputBody['xml_input'] = body_input
+    else :
+        dInputBody['text_input'] = body_input
  
-    
 
 def get_first_char_in_string(strcontent):
     index = 0
@@ -770,6 +878,7 @@ def adddriverall():
     dm2.add_driver('CX600', 'V100R003', 'generalDriver.py')
     dm2.add_driver('NE40E', '1.0', 'telnet_Client.py')  
     dm2.add_driver('AgileController', '1.0', 'generalDriver.py')  
+    dm2.add_driver('SSH', '2.0', 'sshEngineDriver.py') 
     #dm2.show_drivers()          
 
 def getDrivername(productType, version):
@@ -782,6 +891,13 @@ def getDrivername(productType, version):
         drivername = drivername.split('.')[0]
     return drivername
         
+def initUrlmapping():
+    urlmappingclass = urlmapping_mgmt(None,dbfile)
+    #groupname,uriregular,modulename
+    urlmappingclass.add_urlmapping('sshengine', '^inventory/interfaces/interface\\?portID=.*$', 'ovs.portflow') 
+    urlmappingclass.add_urlmapping('sshengine', '^netmonitorPortMirror/portMirrors/portMirror$', 'ovs.portmirror') 
+    urlmappingclass.add_urlmapping('sshengine', '^qos/cars', 'ovs.qoscar') 
+
 def initNetworkDevice():
     #get all devices list
     devicedbMgmt = DevicesMgt(None,dbfile)
@@ -816,7 +932,7 @@ def initNetworkDevice():
     network_devices._opsesn = g_checkesn
     network_devices.initConnectDevice(driverListFinal)
     network_devices.threadstart()
-    
+
 from SocketServer import ThreadingMixIn
 from wsgiref.simple_server import WSGIServer,WSGIRequestHandler
 
@@ -831,7 +947,7 @@ class MyWSGIRequestHandler(WSGIRequestHandler):
     def log_message(self, format, *args):
         logger.info("Response %s - %s" %
                  (self.address_string(),format%args))
-    
+
 if __name__ == '__main__':
 
     ##the following code just does one business, to start up the http server
@@ -878,6 +994,9 @@ if __name__ == '__main__':
     
     ##add a driver to DB.
     adddriverall()    
+    
+    #init urlmapping
+    initUrlmapping()
     
     #init network device
     initNetworkDevice() 
