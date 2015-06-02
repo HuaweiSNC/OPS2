@@ -294,7 +294,7 @@ def isdk_process_editrestapi(dInputBody, lrestApiPath, srestopertype):
         if squery.find('ls=')!=-1 or squery.find('vs=') !=-1:
             lret = isdk_process_querystring(squery)
             if isinstance(lret,list):
-                lrestApiPath.insert(ui, lret[0])
+                lrestApiPath[ui]=  lret[0]
                 sLsorVs = lret[1]
     
     if sLsorVs == '':
