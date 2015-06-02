@@ -79,7 +79,7 @@ ISDK_FALSE = 0
 #input body type
 ISDK_JSON_IP_BODY = 'json_array'
 ISDK_XML_IP_BODY = 'xml_input'
-
+ISDK_TEXT_IP_BODY = 'text_input'
 
 ## schema version
 SCHEMAVERSION = 'V8R5'

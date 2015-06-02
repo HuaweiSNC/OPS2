@@ -14,17 +14,8 @@ import socket
 import json
 import config
 import logging
-from logging.handlers import RotatingFileHandler
-
-logger = logging.getLogger("SNMP_TrapRcv")   
-#logging.basicConfig(filename=config.trapFile, level=logging.DEBUG)
-fmt = logging.Formatter(fmt='%(asctime)s %(message)s')
-#hdlr = logging.FileHandler(config.trapFile)
-size=1024*1024
-hdlr = RotatingFileHandler(filename=config.trapFile, maxBytes=size,backupCount=10)
-
-hdlr.setFormatter(fmt)
-logger.addHandler(hdlr)
+import os
+logger = logging.getLogger("trap.SNMP_TrapRcv") 
 
 #===============================================================================
 #  Configure
@@ -55,22 +46,21 @@ class Rules(object):
     def value(self):
         return None
 
-
+#订阅条件
 class TrapRules(Rules):
-    def __init__(self,host,trap_oid,target):
+    def __init__(self,host,trap_oid):
         self.type = 'TRAP'
         self.host = host
         self.trap_oid = trap_oid
-        self.target = target
         super(TrapRules,self).__init__()
     def equal(self,rule):
-        if self.host == rule.host  and  self.trap_oid == rule.trap_oid  and self.target == rule.target  :
+        if self.host == rule.host  and  self.trap_oid == rule.trap_oid:
             return True
         return False
     def key(self):
         return str(self.type)+str(self.host)+str(self.trap_oid)
     def value(self):
-        return str(self.target)
+        return str(self.host)
 
 #===============================================================================
 # which data define
@@ -122,6 +112,7 @@ class SnmpTrap(Notify):
         self.host = transportAddress[0]  #ipaddress only
         self.port = transportAddress[1]
         self.varBinds = varBinds
+        self.trap_oid = 1
         if msgVer == 1:
             self.trap_oid = varBinds[1][1][0][0][2]  #ObjectName    
             #print 'Notification %s received from %s' % (self.trap_oid, transportAddress)             
@@ -148,45 +139,19 @@ class Dispatcher():
     """From Snmp to Http(channel)
     """
     filter=[]
-    
     match_dict={} #{'key':[a,b,c]}
-    def __init__(self):
-        pass
-    
-    def _search(self,rule):
-        for i in self.filter:
-            if i.equal(rule):
-                return i
-        return None
-        
-    def add_filer(self,rule):
-        if self._search(rule) == None:            
-            self.filter.append(rule)             
-        self.to_dict()        
-    def delete_filter(self,rule):
-        r = self._search(rule)
-        if r != None:
-            self.filter.remove(r)
-        self.to_dict()
-    def to_dict(self):
-        self.match_dict={}        
-        for i in self.filter: 
-            if self.match_dict.has_key(i.key()):               
-                t = self.match_dict[i.key()]               
-                t.append(i.value)              
-                self.match_dict[i.key()] = t
-            else:
-                self.match_dict[i.key()]=[i.value()]                
+    def __init__(self, mychannels):
+        self.channels = mychannels
+             
     def dispatch(self,notify,traprecord):
-        key = ''                   
+        self.channels.dispatch(notify,traprecord)
+        """        key = ''                   
         if notify.key() in self.match_dict:
             key = notify.key()
         elif 'TRAP' in self.match_dict:
             key = 'TRAP'   
-        if key != '':  
-            #print 'Receive subscribed trap'                   
-            for i in self.match_dict[key]:
-                self.http_post(i,traprecord)   
+        if key != '':  """
+        
     #当前是Notification不可靠            
     def http_post(self,httpurl,body):        
         #_,netloc,path,_,_,_= urlparse(httpurl)
@@ -209,46 +174,8 @@ class Dispatcher():
             status,_ = hc._post(httpurl,body) 
         except:
             print 'post to %s fail'%httpurl  
-            return       
-              
-        #print 'http_request:%s,%s'%(httpurl,body)          
-           
-'''
-def dispatch(snmptrap):
-    print snmptrap.key()
-    #if rule['host'] == snmptrap.transportAddress and rule['trap_oid'] == snmptrap.trap_oid :
-    if snmptrap.key() in Rules:
-        for dispatch in Dispatchers:
-            http_post(dispatch['target'],snmptrap.body())      
-    
-'''
-
-'''
-transportDispatcher = AsynsockDispatcher()
-
-transportDispatcher.registerRecvCbFun(cbFun)
-
-# UDP/IPv4
-transportDispatcher.registerTransport(
-    udp.domainName, udp.UdpSocketTransport().openServerMode(('10.135.32.108', 162))
-)
-
-"""
-# UDP/IPv6
-transportDispatcher.registerTransport(
-    udp6.domainName, udp6.Udp6SocketTransport().openServerMode(('::1', 162))
-)
-"""
-transportDispatcher.jobStarted(1)
-
-try:
-    # Dispatcher will never finish as job#1 never reaches zero
-    transportDispatcher.runDispatcher()
-except:
-    transportDispatcher.closeDispatcher()
-    raise
-'''
-
+            return      
+      
 class AsynsockDispatcherEX(AsynsockDispatcher):
     def __init__(self):
         self.thread_stop = False
@@ -259,7 +186,7 @@ class AsynsockDispatcherEX(AsynsockDispatcher):
             from time import time
             poll(timeout and timeout or self.timeout, self.getSocketMap())
             self.handleTimerTick(time())
-        print 'quit from runDispatcher'
+        logger.debug( 'quit from runDispatcher')
     def stop(self):
         self.thread_stop = True
 
@@ -276,11 +203,11 @@ class SNMP_NotifyRcv_Thread(threading.Thread): #The timer class is derived from 
         # UDP/IPv4
         try:
             self.notifyDispatcher.registerTransport(
-                udp.domainName, udp.UdpSocketTransport().openServerMode((ip, port))        
-            )       
+                udp.domainName, udp.UdpSocketTransport().openServerMode((ip, int(port)))   )       
             self.notifyDispatcher.jobStarted(1)
-        except:
-            print 'failed to create the socket'
+        except Exception as e:
+            logger.error('failed to create the socket : %s' % e)
+            
     def run(self): #Overwrite run() method, put what you want the thread do here  
         try:
             # Dispatcher will never finish as job#1 never reaches zero
@@ -288,7 +215,7 @@ class SNMP_NotifyRcv_Thread(threading.Thread): #The timer class is derived from 
         except:
             self.notifyDispatcher.closeDispatcher()
             raise
-        print 'quit from run'
+        logger.debug('quit from run')
     def stop(self):  
         #self.thread_stop = True
         self.notifyDispatcher.stop()
@@ -328,7 +255,7 @@ class SNMP_NotifyRcv_Thread(threading.Thread): #The timer class is derived from 
                     varBinds = pMod.apiPDU.getVarBindList(reqPDU) 
                     trapoid =  (str)(varBinds[1][1][0][0][2])
                
-                ReceivedTrap = SnmpTrap(msgVer,transportDomain,transportAddress,varBinds)  
+                receivedTrap = SnmpTrap(msgVer,transportDomain,transportAddress,varBinds)  
                 
                 trapvbs = ''
                 for oid, val in varBinds:
@@ -346,69 +273,31 @@ class SNMP_NotifyRcv_Thread(threading.Thread): #The timer class is derived from 
                 else:
                     traprecord = v2trapformat%(timestamp,transportAddress[0],trapoid,trapvbs)
                 #print traprecord     
-                logger.warning(traprecord)                          
+                logger.debug(traprecord)                          
                 for i in self._dispatchers:                    
-                    i.dispatch(ReceivedTrap, traprecord)
+                    i.dispatch(receivedTrap, traprecord)
     
-def startReceiveTrap(serverip, trapport=162):
-    dispatcher = Dispatcher()
-    '''
-    traprule1=TrapRules('10.137.210.122',ObjectName('1.3.6.1.6.3.1.1.5.3'),'http://10.135.34.246:8080/channels/2/data')
-    dispatcher.add_filer(traprule1)
-    traprule2=TrapRules('10.137.210.122',ObjectName('1.3.6.1.6.3.1.1.5.4'),'http://10.135.34.246:8080/channels/2/data')
-    dispatcher.add_filer(traprule2)    
-    ''' 
-    #All trap  
-    traprule3=TrapRules('','','http://localhost:9000/channels/2/data')
-    dispatcher.add_filer(traprule3)
-    '''
-    host_name = socket.gethostname()
-    host = socket.gethostbyname(host_name)
-    #port = 163
-    '''
+def startReceiveTrap(serverip, trapport=162, channels=None):
+    
+    dispatcher = Dispatcher(channels)
+ 
     host=serverip
     disip = host
     if disip == '':
         disip = 'localhost'
-    print '%s port %s is listen trap'%(disip,trapport)        
+    logger.info('%s port %s is listen trap'%(disip,trapport) )       
     nt=SNMP_NotifyRcv_Thread(host,trapport)  
     nt.register_dispatcher(dispatcher)
     nt.setDaemon(False)
     nt.start()
-    print 'Start to receive trap'
+    logger.info('Start to receive trap')
     return nt
     
 def stopReceiveTrap(nt):    
     nt.stop()
-    print 'quit from TrapThread' 
+    logger.info( 'quit from TrapThread') 
     
 if __name__ == '__main__':
-    #ss=SnmpTrapService('10.135.32.108',162)
-    #ss.startService()
-    dispatcher = Dispatcher()
-    
-    traprule1=TrapRules('10.137.210.122',ObjectName('1.3.6.1.6.3.1.1.5.3'),'http://10.135.34.246:8090/channels/2/data')
-    dispatcher.add_filer(traprule1)
-    traprule2=TrapRules('10.137.210.122',ObjectName('1.3.6.1.6.3.1.1.5.4'),'http://10.135.34.246:8090/channels/2/data')
-    dispatcher.add_filer(traprule2)
-    ''' 
-    #All trap  
-    traprule3=TrapRules('','','http://10.135.34.246:8090/channels/2/data')
-    dispatcher.add_filer(traprule3)
-    '''
-    host_name = socket.gethostname()
-    host = socket.gethostbyname(host_name)
-    port = 163
-    print host,port, 'is listen trap'        
-    nt=SNMP_NotifyRcv_Thread(host,port)  
-    nt.register_dispatcher(dispatcher)    
-    nt.setDaemon(False)
-    nt.start()
-    print 'Start to receive trap'
-    '''
-    time.sleep(5000)
-    print 'Wait time out'
-    nt.stop()
-    print 'close'
-    '''
+    dispatcher = Dispatcher(None)
+ 
      
