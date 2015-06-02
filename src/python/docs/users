@@ -1,0 +1,58 @@
+<examples>
+	<example>
+		<URL>http://localhost:8080/users</URL>
+		<Method>POST</Method>
+		<RequestBody> {           
+		   "username": "xiele",
+           "passwd": "xie",
+           "role": "100",
+           "desc": "init admin"
+       }</RequestBody>
+		<Description>add a new user</Description>
+	</example>
+	<example>
+		<URL>http://localhost:8080/users</URL>
+		<Method>PUT</Method>
+		<RequestBody>  {          
+		"username": "xiele",
+           "passwd": "xielequan",
+           "role": "100",
+           "desc": "init admin"
+       }</RequestBody>
+		<Description>add a new user</Description>
+	</example>
+	<example>
+		<URL>http://localhost:8080/users/changepassword</URL>
+		<Method>PUT</Method>
+		<RequestBody>{"newpasswd": "xiele" }</RequestBody>
+		<Description> modify password for current user</Description>
+	</example>
+	<example>
+		<URL>https://localhost:8080/users</URL>
+		<Method>GET</Method>
+		<RequestBody>NA</RequestBody>
+		<ResponseBody>
+    {
+       "users":
+       [
+           {
+               "username": "admin",
+               "passwd": "",
+               "creation_date": "2015-03-24 13:13:17.935000",
+               "role": "100",
+               "last_login": null,
+               "desc": "init admin"
+           }
+       ]
+    }
+</ResponseBody>
+		<Description>Select all users configure </Description>
+	</example>
+	<example>
+		<URL>https://localhost:8080/users/xiele</URL>
+		<Method>DELETE</Method>
+		<RequestBody>NA</RequestBody>
+		<Description>Delete a user where username equal xiele </Description>
+	</example>
+</examples>
+

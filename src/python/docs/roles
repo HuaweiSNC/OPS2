@@ -1,0 +1,35 @@
+<examples>
+	<example>
+		<URL>http://localhost:8080/roles</URL>
+		<Method>GET</Method>
+		<RequestBody>NA</RequestBody>
+		<ResponseBody>
+    {
+
+    {
+       "ok":
+       [
+           {
+               "level": 200,
+               "role": "special",
+               "desc": "Super user privilege"
+           },
+           {
+               "level": 100,
+               "role": "admin",
+               "desc": "Management user privilege"
+           },
+           {
+               "level": 50,
+               "role": "user",
+               "desc": "Common user privilege"
+           }
+       ]
+    }
+
+</ResponseBody>
+		<Description>Select all privilege value  </Description>
+	</example>
+ 
+</examples>
+

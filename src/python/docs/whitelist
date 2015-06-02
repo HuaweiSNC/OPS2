@@ -1,0 +1,45 @@
+<examples>
+	<example>
+		<URL>https://10.138.91.247:8080/whitelist</URL>
+		<Method>POST</Method>
+		<RequestBody>{"ipaddress": "10.138.91.247",
+           "desc": "localhost ipaddress" }</RequestBody>
+		<Description>Add an ipaddress for accept </Description>
+	</example>
+	<example>
+		<URL>https://10.138.91.247:8080/whitelist</URL>
+		<Method>PUT</Method>
+		<RequestBody>{"ipaddress": "10.138.91.247",
+           "desc": "localhost ipaddress" }</RequestBody>
+		<Description>modify an ipaddress description </Description>
+	</example>
+	<example>
+		<URL>https://10.138.91.247:8080/whitelist</URL>
+		<Method>GET</Method>
+		<RequestBody>NA</RequestBody>
+		<ResponseBody>
+    {
+       "ipaddress":
+       [
+           {
+               "ipaddress": "127.0.0.1",
+               "desc": "loopback ipaddress"
+           },
+           {
+               "ipaddress": "localhost",
+               "desc": "localhost ipaddress"
+           }
+       ]
+    }
+
+</ResponseBody>
+		<Description>select all ipaddress whitelist </Description>
+	</example>
+	<example>
+		<URL>https://10.138.91.247:8080/whitelist/127.0.0.1</URL>
+		<Method>DELETE</Method>
+		<RequestBody>NA</RequestBody>
+		<Description>Delete an ip address from accept table. </Description>
+	</example>
+</examples>
+

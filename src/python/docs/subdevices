@@ -1,0 +1,64 @@
+<examples>
+	<example>
+		<URL>http://10.138.91.247:8080/subdevices/1</URL>
+		<Method>POST</Method>
+		<RequestBody>{
+           "device":
+           {
+               "passwd": "ooppp",
+               "ip": "10.137.208.45",
+               "username": "root1",
+               "port": 23
+           }
+}</RequestBody>
+		<Description>Add a subdevice under the device id equal 1</Description>
+	</example>
+	<example>
+		<URL>http://10.138.91.247:8080/subdevices/1/1</URL>
+		<Method>PUT</Method>
+		<RequestBody>{
+           "device":
+           {
+               "passwd": "ooppp",
+               "ip": "10.137.208.45",
+               "username": "root1",
+               "port": 23
+           }
+}</RequestBody>
+		<Description>Modify a subdevice where device id equal 1 and subdevice id equal 1</Description>
+	</example>
+	<example>
+		<URL>http://10.138.91.247:8080/devices</URL>
+		<Method>GET</Method>
+		<RequestBody>NA</RequestBody>
+		<ResponseBody>
+    {
+       "device":
+       {
+           "status": "normal",
+           "username": "root",
+           "passwd": "",
+           "ip": "10.175.100.200",
+           "connectstatus": "['normal', 'normal']",
+           "id": 1,
+           "devicename": "EVS-1",
+           "port": 22,
+           "version": "2.0",
+           "productType": "SSH",
+           "error": "",
+           "esn": "",
+           "subdevices":
+           [ 
+           ]
+       }
+    }</ResponseBody>
+		<Description>Select a device from urlmapping where id equal 1 </Description>
+	</example>
+	<example>
+		<URL>http://10.138.91.247:8080/subdevices/1/1</URL>
+		<Method>DELETE</Method>
+		<RequestBody>NA</RequestBody>
+		<Description>Delete an subdevice where device id equal 1 and subdevice id equal 1</Description>
+	</example>
+</examples>
+

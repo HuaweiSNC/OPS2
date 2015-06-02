@@ -1,0 +1,13 @@
+<examples>
+	<example>
+		<URL>http://localhost:8080/devices/1/_restping</URL>
+		<Method>GET</Method>
+		<RequestBody>NA</RequestBody>
+		<ResponseBody>
+		   < ![CDATA[ <restping>pinging success</restping>  ]]>
+        </ResponseBody>
+		<Description>detect the device status  </Description>
+	</example>
+ 
+</examples>
+

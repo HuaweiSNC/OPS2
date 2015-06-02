@@ -1,0 +1,71 @@
+<examples>
+	<example>
+		<URL>http://localhost:8080/devices</URL>
+		<Method>POST</Method>
+		<RequestBody>{
+           "device":
+           {
+               "username": "root123",
+               "passwd": "test",
+               "ip": "10.137.209.30",
+               "devicename": "CE5850-D",
+               "port": 22,
+               "version": "V100R003",
+               "productType": "CE6800"
+           }
+       }</RequestBody>
+		<Description>Add a device </Description>
+	</example>
+	<example>
+		<URL>http://localhost:8080/devices</URL>
+		<Method>PUT</Method>
+		<RequestBody>{
+           "device":
+           {
+               "username": "root123",
+               "passwd": "test",
+               "ip": "10.137.209.30",
+               "id" : 1,
+               "devicename": "CE5850-D",
+               "port": 22,
+               "version": "V100R003",
+               "productType": "CE6800"
+           }
+       }</RequestBody>
+		<Description>Modify a device where id equal 1 and devicename equal CE5850-D</Description>
+	</example>
+	<example>
+		<URL>http://localhost:8080/devices/1</URL>
+		<Method>GET</Method>
+		<RequestBody>NA</RequestBody>
+		<ResponseBody>
+    {
+       "device":
+       {
+           "status": "normal",
+           "username": "root",
+           "passwd": "",
+           "ip": "10.175.100.200",
+           "connectstatus": "['normal', 'normal']",
+           "id": 1,
+           "devicename": "EVS-1",
+           "port": 22,
+           "version": "2.0",
+           "productType": "SSH",
+           "error": "",
+           "esn": "",
+           "subdevices":
+           [
+           ]
+       }
+    }</ResponseBody>
+		<Description>Select a device from urlmapping where id equal 1 </Description>
+	</example>
+	<example>
+		<URL>http://localhost:8080/devices/3</URL>
+		<Method>DELETE</Method>
+		<RequestBody>NA</RequestBody>
+		<Description>Delete an device where id equal 3</Description>
+	</example>
+</examples>
+

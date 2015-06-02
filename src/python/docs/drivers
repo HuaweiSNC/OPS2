@@ -1,0 +1,62 @@
+<examples>
+	<example>
+		<URL>http://localhost:8080/drivers</URL>
+		<Method>POST</Method>
+		<RequestBody> {
+           "driverFile": "generalDriver.py",
+           "version": "1.0",
+           "productType": "NE5000E"
+       }</RequestBody>
+		<Description>Add a driver </Description>
+	</example>
+	<example>
+		<URL>http://localhost:8080/drivers</URL>
+		<Method>POST</Method>
+		<RequestBody>{
+           "driverFile": "generalDriver.py",
+           "version": "1.0",
+           "id": 1,
+           "productType": "NE5000E"
+       }</RequestBody>
+		<Description>Modify a driver where id equal 1</Description>
+	</example>
+	<example>
+		<URL>http://localhost:8080/drivers</URL>
+		<Method>GET</Method>
+		<RequestBody>NA</RequestBody>
+		<ResponseBody>
+    {
+       "drivers":
+       [
+           {
+               "driverFile": "generalDriver.py",
+               "version": "1.0",
+               "id": 1,
+               "productType": "NE5000E"
+           } ,
+           {
+               "driverFile": "generalDriver.py",
+               "version": "1.0",
+               "id": 13,
+               "productType": "AgileController"
+           },
+           {
+               "driverFile": "sshEngineDriver.py",
+               "version": "2.0",
+               "id": 14,
+               "productType": "SSH"
+           }
+       ]
+    }
+
+</ResponseBody>
+		<Description>Select all driver from database. </Description>
+	</example>
+	<example>
+		<URL>http://localhost:8080/driver/3</URL>
+		<Method>DELETE</Method>
+		<RequestBody>NA</RequestBody>
+		<Description>Delete an driver where id equal 3</Description>
+	</example>
+</examples>
+

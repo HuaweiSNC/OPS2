@@ -1,0 +1,10 @@
+{
+ "auth":"false",
+ "whitelist":"false",
+ "serverip":"*",
+ "port":"8080",
+ "loglevel":"INFO",
+ "channelnum":"2",
+ "certfile":"false",
+ "checkesn":"false"
+}
